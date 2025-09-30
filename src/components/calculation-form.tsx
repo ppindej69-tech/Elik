@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Trash2, Calculator, FileText } from 'lucide-react'
+import { Plus, Trash2, Calculator, FileText, Clock, Ruler, Package, Hash } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CalculationItem, CalculationSettings } from '@/types/calculation'
@@ -21,8 +21,8 @@ export default function CalculationForm({
   const [newItem, setNewItem] = useState<Partial<CalculationItem>>({
     typ: 'prace',
     nazev: '',
-    pocetHodin: undefined,
-    metryCtverec: undefined
+    typVypoctuPrace: 'hodiny',
+    typVypoctuMaterial: 'celkova'
   })
 
   const addItem = () => {
@@ -32,10 +32,17 @@ export default function CalculationForm({
       id: Date.now().toString(),
       nazev: newItem.nazev,
       typ: newItem.typ || 'prace',
+      typVypoctuPrace: newItem.typ === 'prace' ? (newItem.typVypoctuPrace || 'hodiny') : undefined,
+      typVypoctuMaterial: newItem.typ === 'material' ? (newItem.typVypoctuMaterial || 'celkova') : undefined,
       pocetHodin: newItem.pocetHodin,
-      sazbaHodina: newItem.typ === 'prace' ? settings.standardniSazba : undefined,
-      metryCtverec: newItem.metryCtverec,
+      sazbaHodina: newItem.typ === 'prace' && newItem.typVypoctuPrace === 'hodiny' ? settings.standardniSazba : undefined,
+      pocetMetru: newItem.pocetMetru,
+      sazbaZaMetr: newItem.typ === 'prace' && newItem.typVypoctuPrace === 'metry' ? settings.standardniSazbaMetr : undefined,
       cenaMaterial: newItem.cenaMaterial,
+      pocetKusu: newItem.pocetKusu,
+      cenaZaKus: newItem.cenaZaKus,
+      pocetMetruMaterial: newItem.pocetMetruMaterial,
+      cenaZaMetrMaterial: newItem.cenaZaMetrMaterial,
       pausalniCena: newItem.pausalniCena,
       poznamka: newItem.poznamka
     }
@@ -44,8 +51,8 @@ export default function CalculationForm({
     setNewItem({
       typ: 'prace',
       nazev: '',
-      pocetHodin: undefined,
-      metryCtverec: undefined
+      typVypoctuPrace: 'hodiny',
+      typVypoctuMaterial: 'celkova'
     })
   }
 
@@ -64,11 +71,25 @@ export default function CalculationForm({
     
     switch (item.typ) {
       case 'prace':
-        const hodiny = item.pocetHodin || 0
-        const sazba = item.sazbaHodina || settings.standardniSazba
-        return hodiny * sazba
+        if (item.typVypoctuPrace === 'hodiny') {
+          const hodiny = item.pocetHodin || 0
+          const sazba = item.sazbaHodina || settings.standardniSazba
+          return hodiny * sazba
+        } else if (item.typVypoctuPrace === 'metry') {
+          const metry = item.pocetMetru || 0
+          const sazba = item.sazbaZaMetr || settings.standardniSazbaMetr
+          return metry * sazba
+        }
+        return 0
       case 'material':
-        return item.cenaMaterial || 0
+        if (item.typVypoctuMaterial === 'celkova') {
+          return item.cenaMaterial || 0
+        } else if (item.typVypoctuMaterial === 'kusy') {
+          return (item.pocetKusu || 0) * (item.cenaZaKus || 0)
+        } else if (item.typVypoctuMaterial === 'metry') {
+          return (item.pocetMetruMaterial || 0) * (item.cenaZaMetrMaterial || 0)
+        }
+        return 0
       case 'doprava':
         return settings.dopravniNaklady
       case 'jidlo':
@@ -133,18 +154,33 @@ export default function CalculationForm({
               </div>
             </div>
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Standardní sazba (Kč/hod)
-                </label>
-                <input
-                  type="number"
-                  value={settings.standardniSazba}
-                  onChange={(e) => onSettingsChange({ ...settings, standardniSazba: Number(e.target.value) })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  min="0"
-                  step="50"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Sazba za hodinu (Kč/hod)
+                  </label>
+                  <input
+                    type="number"
+                    value={settings.standardniSazba}
+                    onChange={(e) => onSettingsChange({ ...settings, standardniSazba: Number(e.target.value) })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    min="0"
+                    step="50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Sazba za metr (Kč/m)
+                  </label>
+                  <input
+                    type="number"
+                    value={settings.standardniSazbaMetr}
+                    onChange={(e) => onSettingsChange({ ...settings, standardniSazbaMetr: Number(e.target.value) })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    min="0"
+                    step="10"
+                  />
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -216,39 +252,167 @@ export default function CalculationForm({
                   placeholder="Název práce/materiálu..."
                 />
               </div>
+              
+              {/* Typ výpočtu pro práci */}
               {newItem.typ === 'prace' && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Počet hodin
+                    Typ výpočtu
                   </label>
-                  <input
-                    type="number"
-                    value={newItem.pocetHodin || ''}
-                    onChange={(e) => setNewItem({ ...newItem, pocetHodin: Number(e.target.value) })}
+                  <select
+                    value={newItem.typVypoctuPrace || 'hodiny'}
+                    onChange={(e) => setNewItem({ ...newItem, typVypoctuPrace: e.target.value as 'hodiny' | 'metry' })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                    min="0"
-                    step="0.5"
-                    placeholder="8"
-                  />
+                  >
+                    <option value="hodiny">Za hodiny</option>
+                    <option value="metry">Za metry</option>
+                  </select>
                 </div>
               )}
+              
+              {/* Typ výpočtu pro materiál */}
               {newItem.typ === 'material' && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Cena materiálu (Kč)
+                    Typ výpočtu
                   </label>
-                  <input
-                    type="number"
-                    value={newItem.cenaMaterial || ''}
-                    onChange={(e) => setNewItem({ ...newItem, cenaMaterial: Number(e.target.value) })}
+                  <select
+                    value={newItem.typVypoctuMaterial || 'celkova'}
+                    onChange={(e) => setNewItem({ ...newItem, typVypoctuMaterial: e.target.value as 'celkova' | 'kusy' | 'metry' })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                    min="0"
-                    step="10"
-                    placeholder="1500"
-                  />
+                  >
+                    <option value="celkova">Celková cena</option>
+                    <option value="kusy">Podle kusů</option>
+                    <option value="metry">Podle metrů</option>
+                  </select>
                 </div>
               )}
             </div>
+            
+            {/* Dodatečné pole pro práci */}
+            {newItem.typ === 'prace' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {newItem.typVypoctuPrace === 'hodiny' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Počet hodin
+                    </label>
+                    <input
+                      type="number"
+                      value={newItem.pocetHodin || ''}
+                      onChange={(e) => setNewItem({ ...newItem, pocetHodin: Number(e.target.value) })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      min="0"
+                      step="0.5"
+                      placeholder="8"
+                    />
+                  </div>
+                )}
+                {newItem.typVypoctuPrace === 'metry' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Počet metrů
+                    </label>
+                    <input
+                      type="number"
+                      value={newItem.pocetMetru || ''}
+                      onChange={(e) => setNewItem({ ...newItem, pocetMetru: Number(e.target.value) })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      min="0"
+                      step="0.5"
+                      placeholder="10"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* Dodatečné pole pro materiál */}
+            {newItem.typ === 'material' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {newItem.typVypoctuMaterial === 'celkova' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Celková cena (Kč)
+                    </label>
+                    <input
+                      type="number"
+                      value={newItem.cenaMaterial || ''}
+                      onChange={(e) => setNewItem({ ...newItem, cenaMaterial: Number(e.target.value) })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      min="0"
+                      step="10"
+                      placeholder="1500"
+                    />
+                  </div>
+                )}
+                {newItem.typVypoctuMaterial === 'kusy' && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Počet kusů
+                      </label>
+                      <input
+                        type="number"
+                        value={newItem.pocetKusu || ''}
+                        onChange={(e) => setNewItem({ ...newItem, pocetKusu: Number(e.target.value) })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        min="0"
+                        step="1"
+                        placeholder="10"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Cena za kus (Kč)
+                      </label>
+                      <input
+                        type="number"
+                        value={newItem.cenaZaKus || ''}
+                        onChange={(e) => setNewItem({ ...newItem, cenaZaKus: Number(e.target.value) })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        min="0"
+                        step="5"
+                        placeholder="50"
+                      />
+                    </div>
+                  </>
+                )}
+                {newItem.typVypoctuMaterial === 'metry' && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Počet metrů
+                      </label>
+                      <input
+                        type="number"
+                        value={newItem.pocetMetruMaterial || ''}
+                        onChange={(e) => setNewItem({ ...newItem, pocetMetruMaterial: Number(e.target.value) })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        min="0"
+                        step="0.5"
+                        placeholder="25"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Cena za metr (Kč)
+                      </label>
+                      <input
+                        type="number"
+                        value={newItem.cenaZaMetrMaterial || ''}
+                        onChange={(e) => setNewItem({ ...newItem, cenaZaMetrMaterial: Number(e.target.value) })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        min="0"
+                        step="5"
+                        placeholder="80"
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+            
             <div className="flex justify-end">
               <Button onClick={addItem} className="bg-green-600 hover:bg-green-700">
                 <Plus className="h-4 w-4 mr-2" />
@@ -281,13 +445,21 @@ export default function CalculationForm({
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 space-y-3">
                       <div className="flex items-center gap-3">
-                        <span className="px-3 py-1 text-xs font-medium rounded-full bg-white/80">
+                        <span className="px-3 py-1 text-xs font-medium rounded-full bg-white/80 flex items-center gap-1">
+                          {item.typ === 'prace' && item.typVypoctuPrace === 'hodiny' && <Clock className="h-3 w-3" />}
+                          {item.typ === 'prace' && item.typVypoctuPrace === 'metry' && <Ruler className="h-3 w-3" />}
+                          {item.typ === 'material' && item.typVypoctuMaterial === 'kusy' && <Hash className="h-3 w-3" />}
+                          {item.typ === 'material' && item.typVypoctuMaterial === 'metry' && <Ruler className="h-3 w-3" />}
+                          {item.typ === 'material' && item.typVypoctuMaterial === 'celkova' && <Package className="h-3 w-3" />}
                           {typeLabels[item.typ]}
+                          {item.typ === 'prace' && ` - ${item.typVypoctuPrace === 'hodiny' ? 'za hodiny' : 'za metry'}`}
+                          {item.typ === 'material' && ` - ${item.typVypoctuMaterial === 'celkova' ? 'celková cena' : item.typVypoctuMaterial === 'kusy' ? 'po kusech' : 'po metrech'}`}
                         </span>
                         <h3 className="font-medium text-gray-900">{item.nazev}</h3>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        {item.typ === 'prace' && (
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        {/* Práce - hodinová sazba */}
+                        {item.typ === 'prace' && item.typVypoctuPrace === 'hodiny' && (
                           <>
                             <div>
                               <label className="block text-xs font-medium text-gray-600 mb-1">
@@ -317,10 +489,44 @@ export default function CalculationForm({
                             </div>
                           </>
                         )}
-                        {item.typ === 'material' && (
+                        
+                        {/* Práce - metrová sazba */}
+                        {item.typ === 'prace' && item.typVypoctuPrace === 'metry' && (
+                          <>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-600 mb-1">
+                                Počet metrů
+                              </label>
+                              <input
+                                type="number"
+                                value={item.pocetMetru || ''}
+                                onChange={(e) => updateItem(item.id, { pocetMetru: Number(e.target.value) })}
+                                className="w-full px-3 py-1 text-sm border border-gray-200 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                min="0"
+                                step="0.5"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-600 mb-1">
+                                Sazba (Kč/m)
+                              </label>
+                              <input
+                                type="number"
+                                value={item.sazbaZaMetr || ''}
+                                onChange={(e) => updateItem(item.id, { sazbaZaMetr: Number(e.target.value) })}
+                                className="w-full px-3 py-1 text-sm border border-gray-200 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                min="0"
+                                step="10"
+                              />
+                            </div>
+                          </>
+                        )}
+                        
+                        {/* Materiál - celková cena */}
+                        {item.typ === 'material' && item.typVypoctuMaterial === 'celkova' && (
                           <div>
                             <label className="block text-xs font-medium text-gray-600 mb-1">
-                              Cena materiálu (Kč)
+                              Celková cena (Kč)
                             </label>
                             <input
                               type="number"
@@ -332,6 +538,71 @@ export default function CalculationForm({
                             />
                           </div>
                         )}
+                        
+                        {/* Materiál - podle kusů */}
+                        {item.typ === 'material' && item.typVypoctuMaterial === 'kusy' && (
+                          <>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-600 mb-1">
+                                Počet kusů
+                              </label>
+                              <input
+                                type="number"
+                                value={item.pocetKusu || ''}
+                                onChange={(e) => updateItem(item.id, { pocetKusu: Number(e.target.value) })}
+                                className="w-full px-3 py-1 text-sm border border-gray-200 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                min="0"
+                                step="1"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-600 mb-1">
+                                Cena za kus (Kč)
+                              </label>
+                              <input
+                                type="number"
+                                value={item.cenaZaKus || ''}
+                                onChange={(e) => updateItem(item.id, { cenaZaKus: Number(e.target.value) })}
+                                className="w-full px-3 py-1 text-sm border border-gray-200 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                min="0"
+                                step="5"
+                              />
+                            </div>
+                          </>
+                        )}
+                        
+                        {/* Materiál - podle metrů */}
+                        {item.typ === 'material' && item.typVypoctuMaterial === 'metry' && (
+                          <>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-600 mb-1">
+                                Počet metrů
+                              </label>
+                              <input
+                                type="number"
+                                value={item.pocetMetruMaterial || ''}
+                                onChange={(e) => updateItem(item.id, { pocetMetruMaterial: Number(e.target.value) })}
+                                className="w-full px-3 py-1 text-sm border border-gray-200 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                min="0"
+                                step="0.5"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-600 mb-1">
+                                Cena za metr (Kč)
+                              </label>
+                              <input
+                                type="number"
+                                value={item.cenaZaMetrMaterial || ''}
+                                onChange={(e) => updateItem(item.id, { cenaZaMetrMaterial: Number(e.target.value) })}
+                                className="w-full px-3 py-1 text-sm border border-gray-200 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                min="0"
+                                step="5"
+                              />
+                            </div>
+                          </>
+                        )}
+                        
                         <div className="flex items-end">
                           <div className="text-right">
                             <div className="text-xs font-medium text-gray-600 mb-1">Celkem</div>

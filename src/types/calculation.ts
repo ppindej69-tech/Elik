@@ -2,10 +2,30 @@ export interface CalculationItem {
   id: string;
   nazev: string;
   typ: 'prace' | 'material' | 'doprava' | 'jidlo' | 'ostatni';
+  
+  // Práce - hodinová sazba
   pocetHodin?: number;
   sazbaHodina?: number;
-  metryCtverec?: number;
+  
+  // Práce - metrová sazba
+  pocetMetru?: number;
+  sazbaZaMetr?: number;
+  
+  // Typ výpočtu práce
+  typVypoctuPrace?: 'hodiny' | 'metry';
+  
+  // Materiál - cena celková nebo podle množství
   cenaMaterial?: number;
+  pocetKusu?: number;
+  cenaZaKus?: number;
+  pocetMetruMaterial?: number;
+  cenaZaMetrMaterial?: number;
+  
+  // Typ výpočtu materiálu
+  typVypoctuMaterial?: 'celkova' | 'kusy' | 'metry';
+  
+  // Ostatní
+  metryCtverec?: number;
   pausalniCena?: number;
   poznamka?: string;
 }
@@ -15,6 +35,7 @@ export interface CalculationSettings {
   zakaznik: string;
   datum: string;
   standardniSazba: number;
+  standardniSazbaMetr: number;
   dopravniNaklady: number;
   nakladyJidlo: number;
 }

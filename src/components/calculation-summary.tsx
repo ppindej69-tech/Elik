@@ -1,4 +1,4 @@
-import { Receipt, TrendingUp } from 'lucide-react'
+import { Receipt, TrendingUp, Clock, Ruler, Package, Hash } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CalculationItem, CalculationSettings, CalculationSummary } from '@/types/calculation'
 
@@ -28,10 +28,20 @@ export default function CalculationSummaryComponent({ items, settings }: Calcula
       } else {
         switch (item.typ) {
           case 'prace':
-            itemTotal = (item.pocetHodin || 0) * (item.sazbaHodina || settings.standardniSazba)
+            if (item.typVypoctuPrace === 'hodiny') {
+              itemTotal = (item.pocetHodin || 0) * (item.sazbaHodina || settings.standardniSazba)
+            } else if (item.typVypoctuPrace === 'metry') {
+              itemTotal = (item.pocetMetru || 0) * (item.sazbaZaMetr || settings.standardniSazbaMetr)
+            }
             break
           case 'material':
-            itemTotal = item.cenaMaterial || 0
+            if (item.typVypoctuMaterial === 'celkova') {
+              itemTotal = item.cenaMaterial || 0
+            } else if (item.typVypoctuMaterial === 'kusy') {
+              itemTotal = (item.pocetKusu || 0) * (item.cenaZaKus || 0)
+            } else if (item.typVypoctuMaterial === 'metry') {
+              itemTotal = (item.pocetMetruMaterial || 0) * (item.cenaZaMetrMaterial || 0)
+            }
             break
           case 'doprava':
             itemTotal = settings.dopravniNaklady
@@ -72,8 +82,20 @@ export default function CalculationSummaryComponent({ items, settings }: Calcula
 
   const summary = calculateSummary()
   const totalHours = items
-    .filter(item => item.typ === 'prace')
+    .filter(item => item.typ === 'prace' && item.typVypoctuPrace === 'hodiny')
     .reduce((total, item) => total + (item.pocetHodin || 0), 0)
+
+  const totalMeters = items
+    .filter(item => item.typ === 'prace' && item.typVypoctuPrace === 'metry')
+    .reduce((total, item) => total + (item.pocetMetru || 0), 0)
+
+  const totalPieces = items
+    .filter(item => item.typ === 'material' && item.typVypoctuMaterial === 'kusy')
+    .reduce((total, item) => total + (item.pocetKusu || 0), 0)
+
+  const totalMaterialMeters = items
+    .filter(item => item.typ === 'material' && item.typVypoctuMaterial === 'metry')
+    .reduce((total, item) => total + (item.pocetMetruMaterial || 0), 0)
 
   const summaryItems = [
     { label: 'Práce', amount: summary.celkemPrace, color: 'text-blue-600', bgColor: 'bg-blue-50' },
@@ -96,19 +118,47 @@ export default function CalculationSummaryComponent({ items, settings }: Calcula
         <CardContent>
           <div className="space-y-6">
             {/* Statistiky projektu */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="bg-white/60 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-                <div className="text-sm font-medium text-gray-600 mb-1">Celkem hodin práce</div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock className="h-4 w-4 text-blue-600" />
+                  <div className="text-sm font-medium text-gray-600">Práce hodin</div>
+                </div>
                 <div className="text-2xl font-bold text-indigo-900">{totalHours}h</div>
               </div>
+              <div className="bg-white/60 backdrop-blur-sm rounded-lg p-4 border border-white/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <Ruler className="h-4 w-4 text-blue-600" />
+                  <div className="text-sm font-medium text-gray-600">Práce metrů</div>
+                </div>
+                <div className="text-2xl font-bold text-indigo-900">{totalMeters}m</div>
+              </div>
+              <div className="bg-white/60 backdrop-blur-sm rounded-lg p-4 border border-white/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <Hash className="h-4 w-4 text-green-600" />
+                  <div className="text-sm font-medium text-gray-600">Kusy materiálu</div>
+                </div>
+                <div className="text-2xl font-bold text-indigo-900">{totalPieces} ks</div>
+              </div>
+              <div className="bg-white/60 backdrop-blur-sm rounded-lg p-4 border border-white/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <Package className="h-4 w-4 text-green-600" />
+                  <div className="text-sm font-medium text-gray-600">Metry materiálu</div>
+                </div>
+                <div className="text-2xl font-bold text-indigo-900">{totalMaterialMeters}m</div>
+              </div>
+            </div>
+
+            {/* Dodatečné statistiky */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-white/60 backdrop-blur-sm rounded-lg p-4 border border-white/20">
                 <div className="text-sm font-medium text-gray-600 mb-1">Počet položek</div>
                 <div className="text-2xl font-bold text-indigo-900">{items.length}</div>
               </div>
               <div className="bg-white/60 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-                <div className="text-sm font-medium text-gray-600 mb-1">Průměrná sazba</div>
+                <div className="text-sm font-medium text-gray-600 mb-1">Průměrná hodinová sazba</div>
                 <div className="text-2xl font-bold text-indigo-900">
-                  {totalHours > 0 ? Math.round(summary.celkemPrace / totalHours).toLocaleString('cs-CZ') : 0} Kč/h
+                  {totalHours > 0 ? Math.round((summary.celkemPrace * (totalHours / (totalHours + totalMeters * (settings.standardniSazbaMetr / settings.standardniSazba)))) / totalHours).toLocaleString('cs-CZ') : 0} Kč/h
                 </div>
               </div>
             </div>
@@ -175,14 +225,22 @@ export default function CalculationSummaryComponent({ items, settings }: Calcula
                 </div>
               )}
             </div>
-            <div className="mt-4 bg-white/60 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-              <div className="text-sm font-medium text-gray-600 mb-1">Datum vytvoření</div>
-              <div className="text-lg font-semibold text-gray-900">
-                {new Date().toLocaleDateString('cs-CZ', { 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-white/60 backdrop-blur-sm rounded-lg p-4 border border-white/20">
+                <div className="text-sm font-medium text-gray-600 mb-1">Datum vytvoření</div>
+                <div className="text-lg font-semibold text-gray-900">
+                  {new Date().toLocaleDateString('cs-CZ', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}
+                </div>
+              </div>
+              <div className="bg-white/60 backdrop-blur-sm rounded-lg p-4 border border-white/20">
+                <div className="text-sm font-medium text-gray-600 mb-1">Standardní sazby</div>
+                <div className="text-sm font-semibold text-gray-900">
+                  {settings.standardniSazba} Kč/hod • {settings.standardniSazbaMetr} Kč/m
+                </div>
               </div>
             </div>
           </CardContent>
