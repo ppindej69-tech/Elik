@@ -7,11 +7,11 @@ export interface PDFExportData {
 }
 
 function formatCurrency(amount: number): string {
-  return `${amount.toLocaleString('cs-CZ')} Kč`
+  return `${Math.round(amount).toLocaleString('cs-CZ')} Kč`
 }
 
-function formatDate(dateString: string): string {
-  const date = new Date(dateString)
+function formatDate(dateString?: string): string {
+  const date = dateString ? new Date(dateString) : new Date()
   return date.toLocaleDateString('cs-CZ', {
     year: 'numeric',
     month: 'long', 
@@ -21,6 +21,11 @@ function formatDate(dateString: string): string {
 
 export function generatePDF(data: PDFExportData): void {
   const { items, settings } = data
+  
+  if (items.length === 0) {
+    throw new Error('Nelze exportovat prázdnou kalkulaci')
+  }
+  
   const doc = new jsPDF('p', 'mm', 'a4')
   
   let yPos = 20
@@ -33,7 +38,7 @@ export function generatePDF(data: PDFExportData): void {
   
   doc.setFontSize(12)
   doc.setFont('helvetica', 'normal')
-  doc.text(`Datum vytvoření: ${formatDate(new Date().toISOString())}`, 20, yPos)
+  doc.text(`Datum vytvoření: ${formatDate()}`, 20, yPos)
   yPos += 10
   
   // Informace o projektu
@@ -82,108 +87,107 @@ export function generatePDF(data: PDFExportData): void {
     yPos = 20
   }
   
-  // Seznam položek - jednoduché zobrazení bez autotable
-  if (items.length > 0) {
-    doc.setFontSize(14)
+  // Seznam položek
+  doc.setFontSize(14)
+  doc.setFont('helvetica', 'bold')
+  doc.text(`Rozpis položek (${items.length})`, 20, yPos)
+  yPos += 10
+  
+  doc.setFontSize(10)
+  doc.setFont('helvetica', 'normal')
+  
+  items.forEach((item, index) => {
+    // Kontrola prostoru
+    if (yPos > 270) {
+      doc.addPage()
+      yPos = 20
+    }
+    
+    const getItemTotal = (): number => {
+      if (item.pausalniCena) return item.pausalniCena
+      
+      switch (item.typ) {
+        case 'prace':
+          if (item.typVypoctuPrace === 'hodiny') {
+            return (item.pocetHodin || 0) * (item.sazbaHodina || settings.standardniSazba)
+          } else if (item.typVypoctuPrace === 'metry') {
+            return (item.pocetMetru || 0) * (item.sazbaZaMetr || settings.standardniSazbaMetr)
+          }
+          return 0
+        case 'material':
+          if (item.typVypoctuMaterial === 'celkova') {
+            return item.cenaMaterial || 0
+          } else if (item.typVypoctuMaterial === 'kusy') {
+            return (item.pocetKusu || 0) * (item.cenaZaKus || 0)
+          } else if (item.typVypoctuMaterial === 'metry') {
+            return (item.pocetMetruMaterial || 0) * (item.cenaZaMetrMaterial || 0)
+          }
+          return 0
+        case 'doprava':
+          return settings.dopravniNaklady
+        case 'jidlo':
+          return settings.nakladyJidlo
+        default:
+          return 0
+      }
+    }
+    
+    const getItemDetails = (): string => {
+      if (item.pausalniCena) return 'Paušální cena'
+      
+      switch (item.typ) {
+        case 'prace':
+          if (item.typVypoctuPrace === 'hodiny') {
+            return `${item.pocetHodin || 0}h × ${formatCurrency(item.sazbaHodina || settings.standardniSazba)}/hod`
+          } else if (item.typVypoctuPrace === 'metry') {
+            return `${item.pocetMetru || 0}m × ${formatCurrency(item.sazbaZaMetr || settings.standardniSazbaMetr)}/m`
+          }
+          return ''
+        case 'material':
+          if (item.typVypoctuMaterial === 'celkova') {
+            return 'Celková cena'
+          } else if (item.typVypoctuMaterial === 'kusy') {
+            return `${item.pocetKusu || 0} ks × ${formatCurrency(item.cenaZaKus || 0)}/ks`
+          } else if (item.typVypoctuMaterial === 'metry') {
+            return `${item.pocetMetruMaterial || 0}m × ${formatCurrency(item.cenaZaMetrMaterial || 0)}/m`
+          }
+          return ''
+        case 'doprava':
+          return 'Dopravní náklady'
+        case 'jidlo':
+          return 'Náklady na jídlo'
+        default:
+          return ''
+      }
+    }
+    
+    const typeLabels: { [key: string]: string } = {
+      prace: 'Práce',
+      material: 'Materiál',
+      doprava: 'Doprava',
+      jidlo: 'Jídlo',
+      ostatni: 'Ostatní'
+    }
+    
+    // Hlavička položky
     doc.setFont('helvetica', 'bold')
-    doc.text('Rozpis položek', 20, yPos)
-    yPos += 10
+    doc.text(`${index + 1}. ${typeLabels[item.typ]}: ${item.nazev}`, 20, yPos)
+    yPos += 5
     
-    doc.setFontSize(10)
+    // Detaily
     doc.setFont('helvetica', 'normal')
+    const details = getItemDetails()
+    if (details) {
+      doc.text(`   ${details}`, 20, yPos)
+      yPos += 4
+    }
     
-    items.forEach((item, index) => {
-      // Kontrola prostoru
-      if (yPos > 270) {
-        doc.addPage()
-        yPos = 20
-      }
-      
-      const getItemTotal = (): number => {
-        if (item.pausalniCena) return item.pausalniCena
-        
-        switch (item.typ) {
-          case 'prace':
-            if (item.typVypoctuPrace === 'hodiny') {
-              return (item.pocetHodin || 0) * (item.sazbaHodina || settings.standardniSazba)
-            } else if (item.typVypoctuPrace === 'metry') {
-              return (item.pocetMetru || 0) * (item.sazbaZaMetr || settings.standardniSazbaMetr)
-            }
-            return 0
-          case 'material':
-            if (item.typVypoctuMaterial === 'celkova') {
-              return item.cenaMaterial || 0
-            } else if (item.typVypoctuMaterial === 'kusy') {
-              return (item.pocetKusu || 0) * (item.cenaZaKus || 0)
-            } else if (item.typVypoctuMaterial === 'metry') {
-              return (item.pocetMetruMaterial || 0) * (item.cenaZaMetrMaterial || 0)
-            }
-            return 0
-          case 'doprava':
-            return settings.dopravniNaklady
-          case 'jidlo':
-            return settings.nakladyJidlo
-          default:
-            return 0
-        }
-      }
-      
-      const getItemDetails = (): string => {
-        if (item.pausalniCena) return 'Paušální cena'
-        
-        switch (item.typ) {
-          case 'prace':
-            if (item.typVypoctuPrace === 'hodiny') {
-              return `${item.pocetHodin || 0}h × ${formatCurrency(item.sazbaHodina || settings.standardniSazba)}/hod`
-            } else if (item.typVypoctuPrace === 'metry') {
-              return `${item.pocetMetru || 0}m × ${formatCurrency(item.sazbaZaMetr || settings.standardniSazbaMetr)}/m`
-            }
-            return ''
-          case 'material':
-            if (item.typVypoctuMaterial === 'celkova') {
-              return 'Celková cena'
-            } else if (item.typVypoctuMaterial === 'kusy') {
-              return `${item.pocetKusu || 0} ks × ${formatCurrency(item.cenaZaKus || 0)}/ks`
-            } else if (item.typVypoctuMaterial === 'metry') {
-              return `${item.pocetMetruMaterial || 0}m × ${formatCurrency(item.cenaZaMetrMaterial || 0)}/m`
-            }
-            return ''
-          case 'doprava':
-            return 'Dopravní náklady'
-          case 'jidlo':
-            return 'Náklady na jídlo'
-          default:
-            return ''
-        }
-      }
-      
-      const typeLabels: { [key: string]: string } = {
-        prace: 'Práce',
-        material: 'Materiál',
-        doprava: 'Doprava',
-        jidlo: 'Jídlo',
-        ostatni: 'Ostatní'
-      }
-      
-      // Hlavička položky
-      doc.setFont('helvetica', 'bold')
-      doc.text(`${index + 1}. ${typeLabels[item.typ]}: ${item.nazev}`, 20, yPos)
-      yPos += 5
-      
-      // Detaily
-      doc.setFont('helvetica', 'normal')
-      const details = getItemDetails()
-      if (details) {
-        doc.text(`   ${details}`, 20, yPos)
-        yPos += 4
-      }
-      
-      // Cena
-      doc.setFont('helvetica', 'bold')
-      doc.text(`   Celkem: ${formatCurrency(getItemTotal())}`, 20, yPos)
-      yPos += 8
-    })
-  }
+    // Cena
+    doc.setFont('helvetica', 'bold')
+    const itemTotal = getItemTotal()
+    doc.text(`   Celkem: ${formatCurrency(itemTotal)}`, 20, yPos)
+    yPos += 8
+  })
   
   // Kontrola prostoru pro souhrn
   if (yPos > 230) {
@@ -305,9 +309,34 @@ export function generatePDF(data: PDFExportData): void {
   doc.text('CELKEM S DPH:', 20, yPos)
   doc.text(formatCurrency(summary.celkemSDph), 150, yPos, { align: 'right' })
   
+  // Statistiky na konci
+  yPos += 15
+  doc.setFontSize(12)
+  doc.setFont('helvetica', 'normal')
+  doc.text('Statistiky:', 20, yPos)
+  yPos += 6
+  
+  const totalHours = items
+    .filter(item => item.typ === 'prace' && item.typVypoctuPrace === 'hodiny')
+    .reduce((sum, item) => sum + (item.pocetHodin || 0), 0)
+  
+  const totalMeters = items
+    .filter(item => item.typ === 'prace' && item.typVypoctuPrace === 'metry')
+    .reduce((sum, item) => sum + (item.pocetMetru || 0), 0)
+  
+  if (totalHours > 0) {
+    doc.text(`Celkem hodin práce: ${totalHours}h`, 20, yPos)
+    yPos += 5
+  }
+  
+  if (totalMeters > 0) {
+    doc.text(`Celkem metrů práce: ${totalMeters}m`, 20, yPos)
+    yPos += 5
+  }
+  
   // Uložení PDF
   const fileName = settings.nazevProjektu 
-    ? `ELIK_${settings.nazevProjektu.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`
+    ? `ELIK_${settings.nazevProjektu.replace(/[^a-zA-Z0-9ěščřžýáíéňťďúů]/g, '_')}.pdf`
     : `ELIK_kalkulace_${new Date().toISOString().split('T')[0]}.pdf`
     
   doc.save(fileName)

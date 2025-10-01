@@ -1,150 +1,145 @@
 # ELIK - Elektroinstalační kalkulace
 
-Profesionální kalkulační systém pro elektrikáře v České republice.
+🔧 **Profesionální kalkulační systém pro elektrikáře v České republice**
 
 ## 🚀 Rychlé spuštění
 
-### 1. Instalace závislostí
-```bash
-npm install
-```
+1. **Instalace závislostí:**
+   ```bash
+   npm install
+   ```
 
-### 2. Spuštění vývojového serveru
-```bash
-npm run dev
-```
+2. **Spuštění aplikace:**
+   ```bash
+   npm run dev
+   ```
 
-Aplikace se spustí na adrese: **http://localhost:5173**
+3. **Otevření v prohlížeči:**
+   - Aplikace běží na: `http://localhost:5173`
 
-### 3. Sestavení pro produkci
-```bash
-npm run build
-```
-
-### 4. Preview produkční verze
-```bash
-npm run preview
-```
-
-## 📋 Systémové požadavky
-
-- **Node.js**: verze 16 nebo vyšší
-- **npm**: verze 8 nebo vyšší
-- Moderní webový prohlížeč (Chrome, Firefox, Safari, Edge)
-
-## 🔧 Funkce aplikace
+## ✨ Hlavní funkce
 
 ### ⚡ Kalkulace práce
-- **Hodinová sazba**: Zadejte počet hodin × sazba za hodinu
-- **Metrová sazba**: Zadejte počet metrů × sazba za metr
-- **Individuální sazby**: Pro každou položku můžete nastavit vlastní sazbu
+- **Hodinová sazba**: Počet hodin × sazba za hodinu
+- **Metrová sazba**: Počet metrů × sazba za metr
+- **Individuální sazby**: Vlastní sazba pro každou položku
 
 ### 📦 Kalkulace materiálu
-- **Celková cena**: Zadejte celkovou částku za materiál
-- **Podle kusů**: Počet kusů × cena za kus
+- **Celková cena**: Paušální částka
+- **Podle kusů**: Počet × cena za kus
 - **Podle metrů**: Počet metrů × cena za metr
 
 ### 🚗 Dodatečné náklady
-- **Doprava**: Automatické přičítání dopravních nákladů
-- **Jídlo**: Náklady na stravu během práce
-- **Ostatní**: Jakékoli další náklady
+- **Doprava**: Fixní dopravní náklady
+- **Jídlo**: Náklady na stravu
+- **Ostatní**: Další náklady
 
 ### 📊 Automatické výpočty
-- **DPH 21%**: Automatické připočítání daně
-- **Souhrny**: Rozpis podle kategorií (práce, materiál, doprava, jídlo)
-- **Statistiky**: Celkové hodiny, metry, kusy materiálu
+- **DPH 21%**: Automatické připočítání
+- **Souhrny**: Rozpis podle kategorií
+- **Statistiky**: Celkové hodiny/metry/kusy
 
 ### 📄 PDF Export
-- **Profesionální kalkulace**: Kompletní rozpis všech položek
-- **Přehledný souhrn**: Celková částka s DPH
-- **Informace o projektu**: Název, zákazník, datum
-- **Standardní sazby**: Přehled používaných sazeb
+- **Profesionální kalkulace**: Kompletní PDF dokument
+- **Přehledný layout**: Všechny informace přehledně
+- **Automatické pojmenování**: Podle názvu projektu
 
-## 💡 Jak používat aplikaci
+## 🔧 Technické informace
+
+### Technologie
+- **React 18** + **TypeScript** + **Vite**
+- **Tailwind CSS** + **shadcn/ui** komponenty
+- **Lucide React** ikony
+- **jsPDF** pro export PDF
+
+### Požadavky
+- **Node.js**: 16.14.0+ (doporučeno 18 LTS)
+- **npm**: 8.0.0+
+- **Moderní prohlížeč**: Chrome 90+, Firefox 88+, Safari 14+
+
+### Skripty
+```bash
+npm run dev      # Vývojový server
+npm run build    # Sestavení pro produkci
+npm run preview  # Náhled produkční verze
+npm run lint     # Kontrola kódu
+```
+
+## 💡 Jak používat
 
 ### 1. Nastavení projektu
-- Zadejte **název projektu** a **jméno zákazníka**
-- Nastavte **standardní sazby** pro hodiny a metry
+- Vyplňte **název projektu** a **zákazníka**
+- Nastavte **standardní sazby** (Kč/hod, Kč/m)
 - Upravte **dopravní náklady** a **náklady na jídlo**
 
 ### 2. Přidávání položek
-- Vyberte **typ položky** (Práce, Materiál, Doprava, Jídlo, Ostatní)
+- Zvolte **typ** (Práce/Materiál/Doprava/Jídlo/Ostatní)
 - Zadejte **název položky**
-- Podle typu vyberte způsob výpočtu:
-  - **Práce**: za hodiny nebo za metry
-  - **Materiál**: celková cena, podle kusů nebo podle metrů
-- Vyplňte potřebné hodnoty (počet, sazby, ceny)
+- Vyplňte **hodnoty** podle typu výpočtu
+- Klikněte **"Přidat položku"**
 
 ### 3. Kontrola a úpravy
-- Ve **sloupu kalkulace** vidíte všechny přidané položky
-- Každou položku můžete **upravit** nebo **odstranit**
-- V **bočním panelu** sledujte průběžný souhrn
+- Ve **středním sloupci** vidíte všechny položky
+- Každou položku lze **upravovat** nebo **mazat**
+- V **pravém panelu** sledujte celkový souhrn
 
-### 4. Export kalkulace
-- Klikněte na tlačítko **"Stáhnout PDF"**
-- Aplikace vytvoří profesionální kalkulaci ve formátu PDF
-- Soubor se automaticky stáhne do složky Downloads
-
-## 🎨 Rozložení aplikace
-
-- **Hlavní panel (vlevo)**: Nastavení projektu a přidávání položek
-- **Boční panel (vpravo)**: Souhrn kalkulace a export do PDF
-- **Horní panel**: Přehled statistik a rychlé akce
+### 4. Export do PDF
+- Klikněte **"Stáhnout PDF"** (vpravo nahoře nebo v bočním panelu)
+- PDF se automaticky stáhne s názvem projektu
 
 ## 💰 Příklad použití
 
-1. **Nastavte projekt**: "Rekonstrukce bytu" pro zákazníka "Jan Novák"
-2. **Přidejte práci**: "Výměna elektrické instalace" - 8 hodin × 800 Kč/hod
-3. **Přidejte materiál**: "Elektrické kabely" - 50 metrů × 80 Kč/metr
-4. **Přidejte dopravu**: Automaticky se přičte podle nastavení (500 Kč)
-5. **Exportujte PDF**: Získáte kompletní kalkulaci s DPH
+1. **Nastavte projekt**: "Rekonstrukce bytu" pro "Jan Novák"
+2. **Přidejte práci**: "Výměna instalace" - 8h × 800 Kč/h = 6,400 Kč
+3. **Přidejte materiál**: "Kabely" - 50m × 80 Kč/m = 4,000 Kč
+4. **Přidejte dopravu**: Automaticky 500 Kč
+5. **Celkem**: 10,900 Kč + DPH = 13,189 Kč
+6. **Exportujte PDF**: Profesionální kalkulace ke stažení
 
-## ⚙️ Technické informace
+## 🎯 Pro koho je ELIK
 
-### Použité technologie
-- **Frontend**: React 18 + TypeScript + Vite
-- **Styling**: Tailwind CSS + shadcn/ui komponenty
-- **Ikony**: Lucide React
-- **PDF**: jsPDF
-- **Build tool**: Vite
+- **🔌 Elektrikáři** - hlavní cílová skupina
+- **🏗️ Elektroinstalační firmy** - pro snadné kalkulace
+- **🏠 OSVČ** - profesionální nabídky pro klienty
+- **📊 Projektanti** - rychlé odhady nákladů
 
-### Struktura projektu
+## 📁 Struktura projektu
+
 ```
 src/
-├── components/          # React komponenty
-│   ├── ui/             # Základní UI komponenty (Button, Card)
+├── components/
+│   ├── ui/              # shadcn/ui komponenty
 │   ├── calculation-form.tsx
 │   └── calculation-summary.tsx
-├── types/              # TypeScript typy
-├── utils/              # Pomocné funkce
-├── lib/                # Knihovny a konfigurace
+├── types/               # TypeScript typy
+├── utils/               # Pomocné funkce
+├── lib/                 # Knihovny a konfigurace
 └── app.tsx             # Hlavní komponenta
 ```
 
-## 🔍 Řešení problémů
+## 🚨 Řešení problémů
 
 ### Aplikace se nespustí
-1. Zkontrolujte, zda máte nainstalovaný Node.js (verze 16+)
-2. Smažte složku `node_modules` a soubor `package-lock.json`
-3. Spusťte znovu `npm install`
-4. Spusťte `npm run dev`
+1. Zkontrolujte Node.js verzi: `node --version`
+2. Smažte cache: `rm -rf node_modules package-lock.json`
+3. Reinstalujte: `npm install`
+4. Spusťte: `npm run dev`
 
-### PDF se nestahuje
-1. Zkontrolujte, zda prohlížeč neblokuje stahování
-2. Zkuste jiný prohlížeč (Chrome, Firefox)
-3. Povolte JavaScript v prohlížeči
+### PDF export nefunguje
+1. Zkontrolujte, že máte přidané položky
+2. Zkuste jiný prohlížeč (doporučen Chrome)
+3. Zkontrolujte konzoli (F12) pro chyby
 
-### Chybí data v kalkulaci
-1. Zkontrolujte, zda jsou vyplněny všechny povinné údaje
-2. Ověřte, že položky mají správně zadané hodnoty
-3. Zkuste obnovit stránku (F5)
-
-## 📞 Podpora
-
-Aplikace je navržena pro jednoduché používání. Všechna data se ukládají pouze lokálně ve vašem prohlížeči.
-
-**Tip**: Pro nejlepší výsledky používejte nejnovější verzi moderního prohlížeče.
+### Port 5173 obsazený
+```bash
+# Najděte proces
+lsof -ti:5173
+# Ukončete proces
+kill -9 $(lsof -ti:5173)
+```
 
 ---
 
-**ELIK v2.0** - Vytvořeno pro česko-slovenské elektrikáře 🇨🇿⚡
+**ELIK v2.0** - Vytvořeno s ❤️ pro české elektrikáře 🇨🇿⚡
+
+*Pro více informací navštivte dokumentaci nebo kontaktujte podporu.*

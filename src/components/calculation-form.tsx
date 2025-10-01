@@ -26,23 +26,26 @@ export default function CalculationForm({
   })
 
   const addItem = () => {
-    if (!newItem.nazev) return
+    if (!newItem.nazev || !newItem.nazev.trim()) {
+      alert('Zadejte název položky')
+      return
+    }
     
     const item: CalculationItem = {
       id: Date.now().toString(),
-      nazev: newItem.nazev,
+      nazev: newItem.nazev.trim(),
       typ: newItem.typ || 'prace',
       typVypoctuPrace: newItem.typ === 'prace' ? (newItem.typVypoctuPrace || 'hodiny') : undefined,
       typVypoctuMaterial: newItem.typ === 'material' ? (newItem.typVypoctuMaterial || 'celkova') : undefined,
-      pocetHodin: newItem.pocetHodin,
+      pocetHodin: newItem.pocetHodin || 0,
       sazbaHodina: newItem.typ === 'prace' && newItem.typVypoctuPrace === 'hodiny' ? settings.standardniSazba : undefined,
-      pocetMetru: newItem.pocetMetru,
+      pocetMetru: newItem.pocetMetru || 0,
       sazbaZaMetr: newItem.typ === 'prace' && newItem.typVypoctuPrace === 'metry' ? settings.standardniSazbaMetr : undefined,
-      cenaMaterial: newItem.cenaMaterial,
-      pocetKusu: newItem.pocetKusu,
-      cenaZaKus: newItem.cenaZaKus,
-      pocetMetruMaterial: newItem.pocetMetruMaterial,
-      cenaZaMetrMaterial: newItem.cenaZaMetrMaterial,
+      cenaMaterial: newItem.cenaMaterial || 0,
+      pocetKusu: newItem.pocetKusu || 0,
+      cenaZaKus: newItem.cenaZaKus || 0,
+      pocetMetruMaterial: newItem.pocetMetruMaterial || 0,
+      cenaZaMetrMaterial: newItem.cenaZaMetrMaterial || 0,
       pausalniCena: newItem.pausalniCena,
       poznamka: newItem.poznamka
     }
@@ -162,7 +165,7 @@ export default function CalculationForm({
                   <input
                     type="number"
                     value={settings.standardniSazba}
-                    onChange={(e) => onSettingsChange({ ...settings, standardniSazba: Number(e.target.value) })}
+                    onChange={(e) => onSettingsChange({ ...settings, standardniSazba: Number(e.target.value) || 0 })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     min="0"
                     step="50"
@@ -175,7 +178,7 @@ export default function CalculationForm({
                   <input
                     type="number"
                     value={settings.standardniSazbaMetr}
-                    onChange={(e) => onSettingsChange({ ...settings, standardniSazbaMetr: Number(e.target.value) })}
+                    onChange={(e) => onSettingsChange({ ...settings, standardniSazbaMetr: Number(e.target.value) || 0 })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     min="0"
                     step="10"
@@ -190,7 +193,7 @@ export default function CalculationForm({
                   <input
                     type="number"
                     value={settings.dopravniNaklady}
-                    onChange={(e) => onSettingsChange({ ...settings, dopravniNaklady: Number(e.target.value) })}
+                    onChange={(e) => onSettingsChange({ ...settings, dopravniNaklady: Number(e.target.value) || 0 })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     min="0"
                     step="50"
@@ -203,7 +206,7 @@ export default function CalculationForm({
                   <input
                     type="number"
                     value={settings.nakladyJidlo}
-                    onChange={(e) => onSettingsChange({ ...settings, nakladyJidlo: Number(e.target.value) })}
+                    onChange={(e) => onSettingsChange({ ...settings, nakladyJidlo: Number(e.target.value) || 0 })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     min="0"
                     step="50"
@@ -242,7 +245,7 @@ export default function CalculationForm({
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Název položky
+                  Název položky *
                 </label>
                 <input
                   type="text"
@@ -250,6 +253,7 @@ export default function CalculationForm({
                   onChange={(e) => setNewItem({ ...newItem, nazev: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   placeholder="Název práce/materiálu..."
+                  required
                 />
               </div>
               
@@ -300,7 +304,7 @@ export default function CalculationForm({
                     <input
                       type="number"
                       value={newItem.pocetHodin || ''}
-                      onChange={(e) => setNewItem({ ...newItem, pocetHodin: Number(e.target.value) })}
+                      onChange={(e) => setNewItem({ ...newItem, pocetHodin: Number(e.target.value) || 0 })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
                       min="0"
                       step="0.5"
@@ -316,7 +320,7 @@ export default function CalculationForm({
                     <input
                       type="number"
                       value={newItem.pocetMetru || ''}
-                      onChange={(e) => setNewItem({ ...newItem, pocetMetru: Number(e.target.value) })}
+                      onChange={(e) => setNewItem({ ...newItem, pocetMetru: Number(e.target.value) || 0 })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
                       min="0"
                       step="0.5"
@@ -338,7 +342,7 @@ export default function CalculationForm({
                     <input
                       type="number"
                       value={newItem.cenaMaterial || ''}
-                      onChange={(e) => setNewItem({ ...newItem, cenaMaterial: Number(e.target.value) })}
+                      onChange={(e) => setNewItem({ ...newItem, cenaMaterial: Number(e.target.value) || 0 })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
                       min="0"
                       step="10"
@@ -355,7 +359,7 @@ export default function CalculationForm({
                       <input
                         type="number"
                         value={newItem.pocetKusu || ''}
-                        onChange={(e) => setNewItem({ ...newItem, pocetKusu: Number(e.target.value) })}
+                        onChange={(e) => setNewItem({ ...newItem, pocetKusu: Number(e.target.value) || 0 })}
                         className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
                         min="0"
                         step="1"
@@ -369,7 +373,7 @@ export default function CalculationForm({
                       <input
                         type="number"
                         value={newItem.cenaZaKus || ''}
-                        onChange={(e) => setNewItem({ ...newItem, cenaZaKus: Number(e.target.value) })}
+                        onChange={(e) => setNewItem({ ...newItem, cenaZaKus: Number(e.target.value) || 0 })}
                         className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
                         min="0"
                         step="5"
@@ -387,7 +391,7 @@ export default function CalculationForm({
                       <input
                         type="number"
                         value={newItem.pocetMetruMaterial || ''}
-                        onChange={(e) => setNewItem({ ...newItem, pocetMetruMaterial: Number(e.target.value) })}
+                        onChange={(e) => setNewItem({ ...newItem, pocetMetruMaterial: Number(e.target.value) || 0 })}
                         className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
                         min="0"
                         step="0.5"
@@ -401,7 +405,7 @@ export default function CalculationForm({
                       <input
                         type="number"
                         value={newItem.cenaZaMetrMaterial || ''}
-                        onChange={(e) => setNewItem({ ...newItem, cenaZaMetrMaterial: Number(e.target.value) })}
+                        onChange={(e) => setNewItem({ ...newItem, cenaZaMetrMaterial: Number(e.target.value) || 0 })}
                         className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
                         min="0"
                         step="5"
@@ -414,7 +418,11 @@ export default function CalculationForm({
             )}
             
             <div className="flex justify-end">
-              <Button onClick={addItem} className="bg-green-600 hover:bg-green-700">
+              <Button 
+                onClick={addItem} 
+                className="bg-green-600 hover:bg-green-700"
+                disabled={!newItem.nazev || !newItem.nazev.trim()}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Přidat položku
               </Button>
@@ -429,7 +437,7 @@ export default function CalculationForm({
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calculator className="h-6 w-6" />
-              Položky kalkulace
+              Položky kalkulace ({items.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -468,7 +476,7 @@ export default function CalculationForm({
                               <input
                                 type="number"
                                 value={item.pocetHodin || ''}
-                                onChange={(e) => updateItem(item.id, { pocetHodin: Number(e.target.value) })}
+                                onChange={(e) => updateItem(item.id, { pocetHodin: Number(e.target.value) || 0 })}
                                 className="w-full px-3 py-1 text-sm border border-gray-200 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 min="0"
                                 step="0.5"
@@ -481,7 +489,7 @@ export default function CalculationForm({
                               <input
                                 type="number"
                                 value={item.sazbaHodina || ''}
-                                onChange={(e) => updateItem(item.id, { sazbaHodina: Number(e.target.value) })}
+                                onChange={(e) => updateItem(item.id, { sazbaHodina: Number(e.target.value) || 0 })}
                                 className="w-full px-3 py-1 text-sm border border-gray-200 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 min="0"
                                 step="50"
@@ -500,7 +508,7 @@ export default function CalculationForm({
                               <input
                                 type="number"
                                 value={item.pocetMetru || ''}
-                                onChange={(e) => updateItem(item.id, { pocetMetru: Number(e.target.value) })}
+                                onChange={(e) => updateItem(item.id, { pocetMetru: Number(e.target.value) || 0 })}
                                 className="w-full px-3 py-1 text-sm border border-gray-200 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 min="0"
                                 step="0.5"
@@ -513,7 +521,7 @@ export default function CalculationForm({
                               <input
                                 type="number"
                                 value={item.sazbaZaMetr || ''}
-                                onChange={(e) => updateItem(item.id, { sazbaZaMetr: Number(e.target.value) })}
+                                onChange={(e) => updateItem(item.id, { sazbaZaMetr: Number(e.target.value) || 0 })}
                                 className="w-full px-3 py-1 text-sm border border-gray-200 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 min="0"
                                 step="10"
@@ -531,7 +539,7 @@ export default function CalculationForm({
                             <input
                               type="number"
                               value={item.cenaMaterial || ''}
-                              onChange={(e) => updateItem(item.id, { cenaMaterial: Number(e.target.value) })}
+                              onChange={(e) => updateItem(item.id, { cenaMaterial: Number(e.target.value) || 0 })}
                               className="w-full px-3 py-1 text-sm border border-gray-200 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                               min="0"
                               step="10"
@@ -549,7 +557,7 @@ export default function CalculationForm({
                               <input
                                 type="number"
                                 value={item.pocetKusu || ''}
-                                onChange={(e) => updateItem(item.id, { pocetKusu: Number(e.target.value) })}
+                                onChange={(e) => updateItem(item.id, { pocetKusu: Number(e.target.value) || 0 })}
                                 className="w-full px-3 py-1 text-sm border border-gray-200 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 min="0"
                                 step="1"
@@ -562,7 +570,7 @@ export default function CalculationForm({
                               <input
                                 type="number"
                                 value={item.cenaZaKus || ''}
-                                onChange={(e) => updateItem(item.id, { cenaZaKus: Number(e.target.value) })}
+                                onChange={(e) => updateItem(item.id, { cenaZaKus: Number(e.target.value) || 0 })}
                                 className="w-full px-3 py-1 text-sm border border-gray-200 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 min="0"
                                 step="5"
@@ -581,7 +589,7 @@ export default function CalculationForm({
                               <input
                                 type="number"
                                 value={item.pocetMetruMaterial || ''}
-                                onChange={(e) => updateItem(item.id, { pocetMetruMaterial: Number(e.target.value) })}
+                                onChange={(e) => updateItem(item.id, { pocetMetruMaterial: Number(e.target.value) || 0 })}
                                 className="w-full px-3 py-1 text-sm border border-gray-200 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 min="0"
                                 step="0.5"
@@ -594,7 +602,7 @@ export default function CalculationForm({
                               <input
                                 type="number"
                                 value={item.cenaZaMetrMaterial || ''}
-                                onChange={(e) => updateItem(item.id, { cenaZaMetrMaterial: Number(e.target.value) })}
+                                onChange={(e) => updateItem(item.id, { cenaZaMetrMaterial: Number(e.target.value) || 0 })}
                                 className="w-full px-3 py-1 text-sm border border-gray-200 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 min="0"
                                 step="5"
@@ -617,6 +625,7 @@ export default function CalculationForm({
                       variant="destructive"
                       size="sm"
                       onClick={() => removeItem(item.id)}
+                      className="hover:scale-105 transition-transform"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

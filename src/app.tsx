@@ -20,6 +20,11 @@ export default function App() {
   })
 
   const handleExportPDF = () => {
+    if (items.length === 0) {
+      alert('Přidejte alespoň jednu položku do kalkulace před exportem.')
+      return
+    }
+    
     try {
       generatePDF({ items, settings })
     } catch (error) {
